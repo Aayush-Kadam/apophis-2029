@@ -1,0 +1,15 @@
+{
+  "frozen_before_first_computation": true,
+  "g0_distance_km": 100.0,
+  "g0_time_seconds": 60.0,
+  "m1_distance_km": 10.0,
+  "m1_time_seconds": 10.0,
+  "speed_kms": 0.01,
+  "holdout_position_km": 0.002,
+  "holdout_velocity_kms": 0.00002,
+  "coarse_to_fine_distance_km": 0.01,
+  "coarse_to_fine_time_seconds": 0.1,
+  "independent_method_time_seconds": 0.02,
+  "science_peak_mib": 300.0,
+  "rationale": "Ten-second fine knots; JD printed to 1e-9 days implies up to roughly 0.1 ms timing quantization. Holdout bounds conservatively allow this at encounter speed. Coarse 300-second Hermite convergence is separately assessed. These are engineering criteria, not physical accuracy estimates."
+}

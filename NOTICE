@@ -1,0 +1,21 @@
+APOPHIS 2029 — The Near-Miss Engine
+Copyright 2026 Aayush Kadam
+
+The owner-authorized original source code and original build/launch scripts are
+licensed under Apache License, Version 2.0 (SPDX: Apache-2.0). See LICENSE.
+
+This license does not relicense NASA/JPL data, source-response metadata,
+third-party dependencies, or their copyright and attribution notices.
+NASA/JPL/Caltech sponsorship or endorsement is not claimed.
+
+Orbital information: NASA/JPL Solar System Dynamics, Horizons, Small-Body
+Database and Close Approach Data API; frozen Apophis orbit solution 220.
+Source queries, retrieval times, signatures and response SHA-256 hashes were
+preserved in the private validated snapshot and its exported provenance.
+Those historical responses, manifests and exports are not in this source ZIP.
+
+React, React DOM and Three.js retain their own notices in
+THIRD_PARTY_NOTICES.md. Other dependencies retain their package licenses.
+No third-party globe texture, imagery, external font or NASA/JPL logo is used.
+Original procedural geometry, shaders, icons and star decoration are
+illustrative and do not claim verified geography or asteroid shape.

@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+*.env
+
+# Private acquisition and generated material
+.env*
+!.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+node_modules/
+web/dist/
+web/public/snapshots/
+reports/
+*.log
+data/source-api-*/
+data/analysis*/
+frontend-snapshots/
+source-run.json
