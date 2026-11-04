@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 message: "Please cite this software when using it."
 title: "APOPHIS 2029"
-version: "0.1.0-source"
+version: "0.2.0"
 type: software
 license: Apache-2.0
 authors:
   - family-names: Kadam
     given-names: Aayush
-abstract: "Source code for validated geocentric encounter reconstruction and local visualization; external JPL data required."
+abstract: "Dual-mode educational visualization and validated geocentric reconstruction code; authentic reconstruction requires separately acquired external JPL inputs."

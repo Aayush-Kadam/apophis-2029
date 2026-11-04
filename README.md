@@ -1,112 +1,82 @@
-# APOPHIS 2029
+# APOPHIS 2029 — Dual-Mode Observatory
 
-**A source-available scientific reconstruction of Apophis’s April 2029 Earth encounter.**
+**v0.2.0 publication candidate — original analytic education, with an explicitly local scientific-data workflow.**
 
-Apache-2.0 original code · Python science engine · React / Three.js visualization · Source release candidate v0.1.0-source
+This is the prepared v0.2.0 release candidate; publication requires owner approval. The earlier public `v0.1.0-source` release remains a separate preserved release. Original owned code is Apache-2.0, Copyright 2026 Aayush Kadam; see [LICENSE](LICENSE), [NOTICE](NOTICE) and [third-party notices](THIRD_PARTY_NOTICES.md).
 
-## The encounter
+## Two unmistakable modes
 
-This project reconstructs geocentric position, velocity and closest approach using official JPL Horizons vectors, with CAD and SBDB checks. The supported orbit solution is **220**. The reconstructed nominal trajectory is a safe flyby, not an impact prediction. This engineering tool does not provide planetary-defense decisions or a new orbit determination.
+| Mode | Included content | Scientific status |
+|---|---|---|
+| Educational Explorer | Original analytic trajectory, procedural globe, 2D/3D renderer and explanations | **EDUCATIONAL DEMONSTRATION — NOT VERIFIED APOPHIS EPHEMERIDES** |
+| Verified Reconstruction · local files | User selects a supported manifest and payload; no observational data ships here | Historical byte match is distinguished from compatible, unauthenticated local data |
 
-## Implemented
+Educational mode runs immediately after the static app is built/served, without any dataset or external service. Its original polynomial uses x=12t, y=24000+0.0001t², z=6000 km; velocities are exact derivatives, and t is relative example time in seconds. These illustrative values are not JPL observations, an orbit determination, or an impact prediction. The default 2D view allocates no WebGL context. 3D supports orbit/zoom, four camera modes, quality selection and context-loss fallback. Both modes have playback, pause, rewind, closest-approach navigation, keyboard timeline control and clear mode labels.
 
-- Two-part TDB epochs, cubic Hermite position and velocity interpolation, and a bounded closest-approach solver.
-- Independent holdouts, analytic solver checks, temporal convergence and source/hash verification.
-- Interactive 3D playback, four cameras, evidence panels, quality controls and 2D context-loss fallback.
-- Sequential official API acquisition with user-supplied contact details and a Windows local-server launcher.
+## Windows setup and launch
 
-## Validation and limitations
-
-Preserved private validation passed **112 Python tests**, including 103 existing tests and nine acquisition guards. The public package includes the test code but excludes historical data and reports. Its documented data-independent subset has 36 tests. Prior client/Python comparisons covered 240 epochs. These are recorded historical results, not a claim that this archive contains the reference datasets or a hosted demo.
-
-Frozen acceptance configuration is in `data/acceptance.json`. It includes holdout position 0.002 km and velocity 0.00002 km/s limits; CAD comparison uses 10 km, 10 s and 0.01 km/s limits. Detailed source-derived numerical result tables remain private pending redistribution clarification.
-
-A previous clean scientific run peaked at 107.133 MiB and took 0.667 seconds wall time on the validation host; this is not a portable performance guarantee. Browser summed working set peaked at 874.746 MiB in the latest 30-minute diagnostic session. The approximately 400 MiB target remains unmet. The latest offline browser-control verification was incomplete. Full data-bearing release status remains **PARTIAL**.
-
-## Architecture
-
-```text
-Official JPL APIs -> raw response/provenance -> validated snapshot
-                                              |
-                                  Python interpolation / solver
-                                              |
-                                  local compact trajectory export
-                                              |
-                                  React + Three.js application
-```
-
-No browser makes JPL API requests. API source and policy: [SSD APIs](https://ssd-api.jpl.nasa.gov/), [Horizons](https://ssd.jpl.nasa.gov/horizons/), [CAD](https://ssd-api.jpl.nasa.gov/doc/cad.html), [SBDB](https://ssd-api.jpl.nasa.gov/doc/sbdb.html).
-
-# Source-only APOPHIS 2029 candidate
-
-Original owned code is Apache-2.0, Copyright 2026 Aayush Kadam. See LICENSE, NOTICE and THIRD_PARTY_NOTICES.md. This source candidate contains no cached JPL API responses, normalized vectors, calculated encounter datasets, frontend trajectory payload, screenshots or historical data-bearing reports. It is not a ready-to-run offline application or an approved public hosted website. Nothing has been published.
-
-## Prerequisites and setup on Windows
-
-Use Python 3.12, Node 24 and pnpm 11.25.0. Install dependencies from the exact locks; do not upgrade them to make a failed check pass. Open PowerShell in the extracted source folder:
+Prerequisites: Python 3.12 for science/tests, Node 24, pnpm 11.25.0. A Python 3.9+ interpreter suffices for the static server. Open PowerShell in the extracted `apophis-2029` source directory:
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock
 cd web
 pnpm install --frozen-lockfile
-cd ..
-```
-
-Dependency installation requires network access or matching cached packages. Installed dependencies retain their separate licenses and are not bundled in this archive.
-
-## Acquire a new private dataset from official APIs
-
-Read the current policy at https://ssd-api.jpl.nasa.gov/ first. Supply your own valid contact email or public HTTPS contact URL at the non-echoing prompt. No contact is invented or saved in the archive or generated provenance. The tool makes five sequential necessary requests, uses one attempt per query with no automatic retries and explicit version checks, saves authentic raw bytes and request metadata, and refuses an existing output directory. Do not run it concurrently or repeatedly for unchanged data.
-
-```powershell
-.\.venv\Scripts\python.exe tools/source_release.py --output ..\apophis-api-run
-```
-
-The output must be a NEW directory outside the source tree. This workflow reuses the original scientific interpolation, time precision, solver and frozen acceptance limits, redirecting only input/output paths. It checks the full request/cadence/frame/units/provenance contract, matching source solutions and all original numerical acceptance conditions before exporting. The existing application supports orbit solution 220 only; a changed solution fails closed and needs new validation, not edited reference values. A new retrieval is explicitly identified as `source-api-<UTC timestamp>`. The exporter's historical snapshot label is replaced only in the newly generated metadata and manifest, never in scientific vector values or source snapshots.
-
-API availability and restoration of historical orbit 220 cannot be guaranteed. A successful new acquisition is not a grant to redistribute the response, normalized vectors, derived data or built website. Those generated outputs stay private pending clarification. No API calls are made by the browser.
-
-## Build the application from your locally acquired data
-
-After PASS_NEW_RUN, copy the two generated files into the previously empty frontend data folder:
-
-```powershell
-New-Item -ItemType Directory -Force web\public\snapshots
-Copy-Item ..\apophis-api-run\frontend-snapshots\*.json web\public\snapshots\
-cd web
-pnpm run test:science
 pnpm run build
 cd ..
-Copy-Item launchers\windows\* web\dist\
-py -3 .\web\dist\launch_apophis.py --no-browser --port 8765
+.\.venv\Scripts\python.exe launchers/b2/launch_observatory.py --directory web/dist --no-browser --port 8870
 ```
 
-Open http://127.0.0.1:8765/ and keep the server terminal open. Stop it with Ctrl+C. All playback assets are then local; reload still needs the local server. The helper serves its own directory, independent of the terminal folder. Do not open index.html as file://, and do not serve the outer source directory.
+Open <http://127.0.0.1:8870/>. Keep the server terminal open and stop it with Ctrl+C. Dependency setup requires network access or matching cached packages. Do not open index.html directly with file://. The helper binds only loopback; it does not retrieve data, install software or host a public website.
 
-## Tests and historical reproducibility boundary
+The separately supplied static candidate ZIP contains `APOPHIS_OBSERVATORY/index.html`, `assets/`, notices and a launcher. Extract it fully, then double-click `APOPHIS_OBSERVATORY/START_OBSERVATORY.cmd`, or run `py -3 "C:\Your extracted folder\APOPHIS_OBSERVATORY\launch_observatory.py" --no-browser`. It serves its own directory independently of the terminal location. If port 8870 is occupied, pass `--port 8871`. The original `launchers/windows` scripts/tests remain unchanged for the separate historical data-bearing application; use `launchers/b2` for this candidate.
 
-The mathematical solver, launcher and source-workflow guard tests need no JPL response:
+## Local scientific-data import
+
+Click **Verified Reconstruction · load local files**. Select exactly `manifest.json` and `encounter.json`, acknowledge the local-read consent checkbox, then choose **Validate and open**. Files are read in browser memory only. They are not uploaded, persisted or used in analytics; the app has no JPL API calls. Clear local data removes app references, and reload returns to educational mode. Operating-system/driver memory release is not an immediate zero-RAM guarantee.
+
+Supported export format: manifest and payload schema 1.0; orbit 220; Earth-centered ICRF / FRAME, geometric NONE; TDB; km, km/s and seconds; coarse 865 × 300-second rows and fine 1441 × 10-second rows, with the original 2029-Apr-12 TDB reference epoch. Validation checks filenames, size caps (16 KiB manifest / 4 MiB payload), UTF-8, JSON complexity/unsafe keys, numeric finiteness, ordering/cadence/windows, coordinate/time contracts, result consistency, source signatures/versions and provenance. Missing or incompatible provenance is rejected as unverified, not silently promoted to a verified record. See [input format and privacy](docs/B2_INPUT_AND_PRIVACY.md).
+
+A compatible payload that differs from the release's reviewed historical digest is **UNVERIFIED LOCAL DATA**. User-supplied provenance and a matching user manifest cannot authenticate origin. An exact historical payload byte match is labeled separately against the fixed maintainer-review digest; it is not a JPL digital signature or a new independent orbital validation. No imported file is automatically official, and import never grants redistribution rights.
+
+Users may independently prepare their own appropriate export using `tools/source_release.py`, with their own legitimate runtime contact and in accordance with the current [JPL API policy](https://ssd-api.jpl.nasa.gov/). The acquisition workflow requires external access and makes five necessary sequential requests; it is separate from the browser, which calls no JPL API. Do not run acquisition concurrently, redundantly, or as part of a browser test. API availability and future access to orbit 220 are not guaranteed. This B2 milestone makes **no new JPL data requests**.
+
+## Tests and scientific preservation
+
+Public Python test collection:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/test_solver_analytic.py tests/test_windows_launcher.py tests/test_source_release.py -q
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-All original test source is retained unchanged. The historical integration tests include comparisons with the original rejected timestamp-precision result, frozen snapshot and byte-identical historical exports. Those reference artifacts are intentionally absent here. Without the authentic historical baseline, the complete public test collection reports 59 passes and 53 explicit skips, not 112 validated tests. Do not treat skipped historical checks as proof of acceptance on a live replacement. The new acquisition tool independently runs the unchanged scientific acceptance checks against the newly retrieved five-source dataset; it does not fabricate old reports or replace historical regression fixtures.
+The source package contains all original test assertions. Without historical private inputs, 59 data-independent Python tests pass and 53 authentic-data checks explicitly skip. This is not equivalent to the separately preserved 112/112 private scientific suite. Historical inputs and results are deliberately absent; see [TESTING.md](TESTING.md).
 
-Exact offline reproduction of the historical gate requires the preserved private baseline. Removing its data changes the distribution contract and is not equivalent to the original offline release. Permission to bundle raw data versus normalized/derived/frontend data and pure provenance remains a distinct owner decision requiring documented terms or JPL clarification.
+Public dual-mode/invalid-input tests:
 
-Detailed R0-R2 evidence and full original numerical reports remain private, outside this source-only package. This README describes the workflow; it does not itself assert that network acquisition was completed or approved for public distribution.
+```powershell
+cd web
+node --experimental-strip-types tests/dual-mode.test.ts
+cd ..
+```
 
+These execute the independent analytic example and malformed-input cases. The authentic-fixture campaign explicitly skips unless `APOPHIS_PRIVATE_FIXTURE_DIR` points to separately held `manifest.json` and `encounter.json`. No test downloads observations. The existing `pnpm run test:science` is an authentic-data-dependent 240-epoch comparison and needs that payload separately placed in `web/public/snapshots` in an isolated **private** validation tree. Never put private files there before making a public build/package.
 
-## License and distribution boundary
+The original Python calculations and client interpolation formulas are preserved. The private 112-test suite, 240 Python/client comparisons and two network-blocked reproductions are recorded separately. They validate the nominal orbit-220 reconstruction, not a new orbit solution or impact-risk assessment. Horizons and CAD share a model lineage. The educational mode is tested independently and carries no fabricated source/CAD uncertainty claims.
 
-Copyright 2026 Aayush Kadam. Original owned code is Apache-2.0; see LICENSE and NOTICE. Dependencies retain their own terms in THIRD_PARTY_NOTICES.md. No images, textures, fonts, dependency binaries, JPL responses, normalized vectors, generated bundles or private evidence are distributed here. Acquisition does not confer redistribution permission. A locally generated website is not approved for public hosting by this source release.
+See [browser and memory reproduction](docs/B2_BROWSER_AND_MEMORY.md) for the independent local Playwright campaign and exact evidence scope. Do not call simulated/unit checks browser acceptance. The existing approximately 400 MiB absolute browser working-set target remains unmet; incremental metrics are additional reporting, not an approved replacement threshold. No portable FPS, universal device or zero-memory-leak guarantee is made.
 
-## Future work
+## Offline and privacy boundaries
 
-Possible work includes broader validated orbit support and browser resource improvements. These are proposals, not implemented capabilities.
+The educational app and imported data can operate without internet after assets are loaded. A locally served static bundle requires only the local server and browser. No service worker or persistent offline cache is installed; a cold remote visit/reload requires its code assets. Imported files are intentionally not restored after reload. No external fonts, textures, analytics or APIs are needed for the application.
 
-## Explicit public test tiers
+## Rights, attribution and release scope
 
-See [TESTING.md](TESTING.md). Run `python -m pytest -q`: 59 data-independent tests run, while 53 historical integrations explicitly skip when the authentic historical baseline is absent. A skip is not scientific validation. The narrower 36-test command selects only three modules; additional data-independent tests are available across the other modules.
+This package includes original code and original illustrative formulas, not raw JPL responses, observational vectors, normalized ephemerides, compact historical payloads, private scientific evidence or a hosted authentic reconstruction. The fixed historical digest is pure integrity metadata; it contains no state vectors or private contact information. NASA/JPL data licensing is separate from Apache-2.0 original code. JPL output redistribution/hosting remains unresolved for the separate data-bearing product. General media guidance and API access are not treated as blanket data licenses. No NASA/JPL sponsorship or endorsement.
+
+Third-party dependencies retain their licenses in THIRD_PARTY_NOTICES.md and installed package distributions. Procedural graphics are illustrative, not verified geography or asteroid shape. Future public deployment, GitHub changes, data redistribution and outreach require separate owner authorization. This candidate is prepared for owner approval; no deployment is included.
+
+## v0.2.0 validation and measured limitations
+
+The preserved private historical validation passed 112 scientific tests, 240 client/Python comparisons and two deterministic network-blocked reproductions. The public clean-extraction suite passed 59 Python tests and explicitly skipped 53 historical-data tests. Frontend data-independent tests passed 8 cases, with one authentic-fixture group skipped; a separate private-fixture campaign passed 39 cases. Actual Windows Chrome browser testing passed 17 workflows plus six final packaged-application checks. These evidence classes are distinct; private datasets and reports are not included.
+
+In a 604.157-second, 294-sample Windows Chrome 156 headless campaign (1280×1000, Intel UHD D3D11), matched blank-browser median working set was 496.60 MiB; educational 2D median was 562.13 MiB, educational 3D playback median 609.84 MiB, and total observed peak 771.35 MiB. The original approximately 400 MiB total-browser target remains **UNMET**, not waived or replaced. Summed process working sets include shared pages and are not unique physical allocation or VRAM. This finite observation is not a zero-leak or universal-device guarantee. See [release notes](RELEASE_NOTES.md) and [changelog](CHANGELOG.md). Data-bearing application redistribution remains unresolved; no complete authentic-data application is publicly hosted by this release.

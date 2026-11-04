@@ -1,22 +1,22 @@
 import {useEffect,useRef,useState} from 'react';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {evaluate,type Bundle} from './science';
+import {evaluate,type RenderData} from './model';
 
 export type CameraMode='Earth'|'Chase'|'Wide'|'Scientific';
-type Props={data:Bundle;t:number;mode:CameraMode;visible:boolean;quality:string;force2d:boolean;vectors:boolean};
+type Props={data:RenderData;t:number;mode:CameraMode;visible:boolean;quality:string;force2d:boolean;vectors:boolean;referenceLabel?:string};
 type Controller={update:(p:Props)=>void;lose:()=>void;restore:()=>void;sample:()=>void};
 
-export function Plot2D({data,t}:{data:Bundle;t:number}){
+export function Plot2D({data,t}:{data:RenderData;t:number}){
   const points=data.fine.map(row=>`${250+row[1]/450},${180-row[2]/450}`).join(' ');
   const s=evaluate(data,t);
-  return <svg viewBox="0 0 500 360" className="fallback-plot" role="img" aria-label="Earth-centered ICRF X Y projection of the same frozen trajectory; out-of-plane Z omitted">
+  return <svg viewBox="0 0 500 360" className="fallback-plot" role="img" aria-label="Earth-centered X Y projection of the selected trajectory; out-of-plane Z omitted">
     <defs><radialGradient id="earth2"><stop stopColor="#245673"/><stop offset="1" stopColor="#0c2030"/></radialGradient></defs>
     <line x1="0" y1="180" x2="500" y2="180" stroke="#203140"/><line x1="250" y1="0" x2="250" y2="360" stroke="#203140"/>
     <circle cx="250" cy="180" r={6371/450} fill="url(#earth2)" stroke="#67b9d6"/>
     <polyline points={points} stroke="#6ce4ef" strokeWidth="1" fill="none"/>
     <circle cx={250+s.r[0]/450} cy={180-s.r[1]/450} r="4" fill="#f7bd78"/>
-    <text x="16" y="26" fill="#b4cad8" fontSize="11">ICRF X–Y projection · Z omitted · enlarged marker</text>
+    <text x="16" y="26" fill="#b4cad8" fontSize="11">X–Y projection · Z omitted · enlarged marker</text>
   </svg>;
 }
 
@@ -26,7 +26,11 @@ export default function Scene(props:Props){
   const qa=new URLSearchParams(location.search).has('qa');
   const [stats,setStats]=useState<{draws:number;seconds:number;drawsPerSecond:number;geometries:number;textures:number;heapBytes:number|null}|null>(null);
   useEffect(()=>{
-    const container=host.current!; let renderer:THREE.WebGLRenderer;
+    const container=host.current!;
+    // A 2D projection must not keep a hidden WebGL scene/context alive.
+    // Dependency changes run the previous effect cleanup before this early return.
+    if(props.force2d){setFailure(false);setStats(null);return;}
+    let renderer:THREE.WebGLRenderer;
     try {renderer=new THREE.WebGLRenderer({antialias:false,alpha:true,powerPreference:'low-power'});}
     catch {setFailure(true);return;}
     setFailure(false); renderer.setPixelRatio(Math.min(devicePixelRatio,props.quality==='Low'?1:1.25));
@@ -93,15 +97,15 @@ export default function Scene(props:Props){
       updating=true;controls.update();updating=false;draw();
     }};
     controller.current.update(props);resize();
-    return()=>{controller.current=null;observer.disconnect();controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('webglcontextrestored',restored);
+    return()=>{controller.current=null;observer.disconnect();controls.removeEventListener('change',orbitDraw);controls.dispose();renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('webglcontextrestored',restored);
       scene.traverse(object=>{const mesh=object as THREE.Mesh;if(mesh.geometry)mesh.geometry.dispose();if(mesh.material){const materials=Array.isArray(mesh.material)?mesh.material:[mesh.material];materials.forEach(material=>material.dispose());}});
-      renderer.dispose();renderer.domElement.remove();};
-  },[props.data,props.quality]);
+      renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();};
+  },[props.data,props.quality,props.force2d]);
   useEffect(()=>{controller.current?.update(props);},[props.t,props.mode,props.visible,props.vectors,props.data,props.quality]);
   return <div className="scene-wrap" data-testid="scene" data-time={props.t}>
     <div className="webgl-host" ref={host} style={{visibility:failure||props.force2d?'hidden':'visible'}}/>
     {(failure||props.force2d)&&<div className="fallback"><Plot2D data={props.data} t={props.t}/><p>{failure?'3D is unavailable. The same frozen trajectory remains available in 2D.':'Scientific 2D projection · same timeline and physical metrics'}</p></div>}
     {qa&&<details className="qa-tools"><summary>Local QA controls</summary><button onClick={()=>controller.current?.lose()}>Simulate WebGL context loss</button><button onClick={()=>controller.current?.restore()}>Restore WebGL context</button><button onClick={()=>controller.current?.sample()}>Begin rendering sample</button><output data-testid="render-statistics">{JSON.stringify(stats)}</output></details>}
-    <div className="scene-caption"><span className="tiny-cross">+</span> EARTH-CENTERED ICRF <span>Illustrative globe & lighting · no geographic alignment</span></div>
+    <div className="scene-caption"><span className="tiny-cross">+</span> {props.referenceLabel??'EARTH-CENTERED ICRF'} <span>Illustrative globe & lighting · no geographic alignment</span></div>
   </div>;
 }

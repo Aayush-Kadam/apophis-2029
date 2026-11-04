@@ -19,3 +19,6 @@ data/source-api-*/
 data/analysis*/
 frontend-snapshots/
 source-run.json
+
+.b2-test-output/
+.b2-test-tools/

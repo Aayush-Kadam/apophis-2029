@@ -1,13 +1,11 @@
-# Owner publication checklist
+# v0.2.0 owner publication checklist
 
-Proposed repository: `apophis-2029` (public).
-Description: Scientific reconstruction and local 3D visualization of Apophis’s 2029 Earth flyby, with validated Python numerics and user-acquired JPL data.
-Topics: apophis, astronomy, orbital-mechanics, scientific-computing, python, typescript, threejs, reproducibility.
-Tag: `v0.1.0-source` (separate from internal package 0.1.2).
+Existing repository: https://github.com/Aayush-Kadam/apophis-2029. Proposed tag: v0.2.0. Preserve v0.1.0-source and its commit/assets.
 
-- Review GH-P0 report, allowlist, scan findings and archive checksum.
-- Obtain explicit owner approval before repository creation, upload, push, release or Pages deployment.
-- Initialize a new history only from the reviewed public archive; never import private workspace history.
-- Confirm LICENSE, NOTICE, attribution, citation and README rendering on the publication target.
-- Verify remote contents against the approved allowlist after authorized publication.
-- Keep generated datasets, builds, reports, contacts and environments private.
+1. Review the exact v0.2.0 ZIPs, checksums and public release notes. Explicitly acknowledge the original 400 MiB target remains unmet; source-only release approval does not revise scientific/resource criteria or authorize authentic-data redistribution.
+2. Obtain explicit owner approval for the precise main-branch update, tag, GitHub Release and listed assets. No Pages or hosted deployment is included.
+3. Before any authorized push, verify the authenticated owner and existing remote branch/tag state. Add only the approved source allowlist on top of the existing public history; never import private workspace history. Do not overwrite an existing v0.2.0 tag/release.
+4. Use appropriate configured GitHub noreply author attribution. Commit only source; attach the separately reviewed local-app ZIP and checksum manifest to the release if authorized. Do not commit dist, datasets, private reports or environments.
+5. After publication, compare repository source contents against the approved hashes; verify tag/commit, release asset checksums, README rendering and absence of private material. Preserve prior release assets and history.
+
+No publication is performed by this checklist. Original code is Apache-2.0 only within its ownership scope; third-party/data terms remain separate. Browser-memory B2-M and data-bearing R0 limitations remain recorded.

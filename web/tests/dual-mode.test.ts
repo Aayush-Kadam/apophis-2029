@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {educationalTrajectory,evaluate,EDUCATIONAL_NOTICE} from '../src/model.ts';
+import {readLocalScientificFiles} from '../src/local-data.ts';
+const results:{name:string;status:string}[]=[];
+async function test(name:string,fn:()=>unknown|Promise<unknown>){await fn();results.push({name,status:'PASS'});}
+await test('educational polynomial and derivatives',()=>{const data=educationalTrajectory();for(let t=-5400;t<=5400;t+=37){const s=evaluate(data,t);assert(Math.abs(s.r[0]-12*t)<1e-9);assert(Math.abs(s.r[1]-(24000+.0001*t*t))<1e-9);assert(Math.abs(s.r[2]-6000)<1e-9);assert(Math.abs(s.v[0]-12)<1e-12);assert(Math.abs(s.v[1]-.0002*t)<1e-12);}assert.equal(data.event_seconds,0);});
+await test('educational identity never claims observations',()=>{const data=educationalTrajectory();assert(!('provenance' in data));assert(!('orbit_id' in data));assert(!('results' in data));assert(EDUCATIONAL_NOTICE.includes('NOT VERIFIED APOPHIS EPHEMERIDES'));});
+let network=0;globalThis.fetch=async()=>{network++;throw Error('Network prohibited in import tests')};
+await test('missing input rejected',()=>assert.rejects(()=>readLocalScientificFiles([]),/exactly/));
+await test('unexpected filenames rejected',()=>assert.rejects(()=>readLocalScientificFiles([new File(['{}'],'a.json'),new File(['{}'],'b.json')]),/filenames/));
+await test('duplicate filename rejected',()=>assert.rejects(()=>readLocalScientificFiles([new File(['{}'],'manifest.json'),new File(['{}'],'manifest.json')]),/filenames/));
+await test('oversize rejected before reading',()=>assert.rejects(()=>readLocalScientificFiles([new File(['{}'],'manifest.json'),new File([new Uint8Array(4*1024*1024+1)],'encounter.json')]),/size/));
+await test('malformed and truncated JSON rejected',()=>assert.rejects(()=>readLocalScientificFiles([new File(['{'],'manifest.json'),new File(['{}'],'encounter.json')]),/Malformed/));
+await test('non-UTF8 rejected',()=>assert.rejects(()=>readLocalScientificFiles([new File([new Uint8Array([255])],'manifest.json'),new File(['{}'],'encounter.json')]),/UTF-8/));
+const dir=process.env.APOPHIS_PRIVATE_FIXTURE_DIR;
+if(dir){
+ const manifest=JSON.parse(fs.readFileSync(path.join(dir,'manifest.json'),'utf8'));const bytes=fs.readFileSync(path.join(dir,'encounter.json'));const original=JSON.parse(bytes.toString());
+ async function pair(mutator?:(data:any)=>void,manifestMutator?:(m:any)=>void){const d=structuredClone(original),m=structuredClone(manifest);if(mutator)mutator(d);const content=mutator?new TextEncoder().encode(JSON.stringify(d)):bytes;const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',content)),n=>n.toString(16).padStart(2,'0')).join('');m.files['encounter.json']=digest;if(manifestMutator)manifestMutator(m);return [new File([JSON.stringify(m)],'manifest.json'),new File([content],'encounter.json')];}
+ await test('authentic private payload byte-match recognized',async()=>{const r=await readLocalScientificFiles(await pair());assert.equal(r.verification,'historical-byte-match');assert.equal(r.data.orbit_id,'220');});
+ await test('compatible changed metadata remains unverified',async()=>{const r=await readLocalScientificFiles(await pair(d=>d.results.limitations.push('Synthetic test annotation only')));assert.equal(r.verification,'compatible-unverified');});
+ const bad:[string,(d:any)=>void][]=[
+ ['payload schema',d=>d.schema_version='99'],['orbit',d=>d.orbit_id='221'],['frame',d=>d.frame='ECLIPTIC'],['scale',d=>d.time_scale='UTC'],['units',d=>d.units.position='au'],['reference epoch',d=>d.origin_jd_tdb1+=1],['truncated rows',d=>d.fine.pop()],['ordering',d=>d.fine[1][0]=d.fine[0][0]],['gap',d=>d.fine[10][0]+=.1],['finiteness',d=>d.fine[1][1]=null],['provenance absent',d=>delete d.provenance],['provenance endpoint',d=>d.provenance.cad.endpoint='https://invalid.example/'],['signature version',d=>d.provenance.cad.api_signature.version='99'],['provenance date',d=>d.provenance.cad.retrieved_utc='invalid'],['impossible provenance calendar',d=>d.provenance.cad.retrieved_utc='2026-02-31T12:00:00Z'],['impossible UTC calendar',d=>d.results.time_labels.utc='2029-02-31T12:00:00Z'],['source query window',d=>d.provenance['fine-uniform'].parameters.START_TIME="'2029-Apr-12'"],['provenance coordinate',d=>d.provenance['fine-uniform'].parameters.CENTER="'500@10'"],['result coordinate metadata',d=>d.results.metadata.center='Sun'],['UTC label',d=>d.results.time_labels.utc='not-a-time'],['IST label',d=>d.results.time_labels.ist='2029-04-14T03:15:03Z'],['result orbit',d=>d.results.cad.orbit_id='221'],['event inconsistency',d=>d.results.event.distance_km+=1],['acceptance failure',d=>d.results.checks.holdout_velocity=false],['unsafe key',d=>Object.defineProperty(d,'__proto__',{value:{bad:true},enumerable:true})],['excessive nesting',d=>{let x=d;for(let i=0;i<30;i++){x.nested={};x=x.nested;}}]];
+ for(const [name,mutate] of bad)await test('reject '+name,async()=>assert.rejects(()=>pair(mutate).then(readLocalScientificFiles)));
+ await test('manifest identity mismatch',async()=>assert.rejects(()=>pair(undefined,m=>m.snapshot_id='wrong').then(readLocalScientificFiles),/identity/));
+ await test('manifest schema mismatch',async()=>assert.rejects(()=>pair(undefined,m=>m.schema_version='99').then(readLocalScientificFiles),/manifest/));
+ await test('digest mismatch',async()=>assert.rejects(()=>pair(undefined,m=>m.files['encounter.json']='0'.repeat(64)).then(readLocalScientificFiles),/checksum/));
+}else results.push({name:'authentic import/negative-fixture campaign requires separately held private export',status:'SKIP'});
+assert.equal(network,0);console.log(JSON.stringify({scope:dir?'educational plus isolated private-authentic validation':'public data-independent tests; private-authentic fixtures absent',network_calls:network,results,passed:results.filter(r=>r.status==='PASS').length,skipped:results.filter(r=>r.status==='SKIP').length},null,2));
